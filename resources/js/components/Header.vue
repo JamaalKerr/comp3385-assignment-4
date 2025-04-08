@@ -43,5 +43,8 @@ const logOut = () => {
 </template>
 
 <style scoped>
-
+.nav-link.active {
+    font-weight: bold;
+    color: #f8d210; /* Highlight active links */
+}
 </style>

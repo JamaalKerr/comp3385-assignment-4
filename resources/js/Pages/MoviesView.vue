@@ -1,46 +1,50 @@
 <script setup>
- import { ref, onMounted } from 'vue';
- let movies = ref([]);
- const fetchMovies = async () => {
-     try {
-         const response = await fetch('/api/v1/movies', {
-             method: 'GET',
-             headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-         });
-         if (response.ok) {
-             const data = await response.json();
-             movies.value = data.movies;
-             console.log(data);
-         } else {
-             throw new Error('Failed to fetch movies');
-         }
-     } catch (error) {
-         console.error('Error:', error);
-     }
- };
- onMounted(fetchMovies);
- </script>
- 
- <template>
-     <div class="container">
-         <h1>Movies</h1>
-         <div class="row">
-             <div class="col" v-for="movie in movies" :key="movie.id">
-                 <div class="card mb-3" style="max-width: 540px;">
-                     <div class="row g-0">
-                         <div class="col-md-4">
-                             <img :src="'/storage/' + movie.poster" class="img-fluid rounded-start" alt="Movie Poster" style="height: 100%; object-fit: cover;">
-                         </div>
-                         <div class="col-md-8">
-                             <div class="card-body">
-                                 <h5 class="card-title">{{ movie.title }}</h5>
-                                 <p class="card-text">{{ movie.description }}</p>
-                                 <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-             </div>
-         </div>
-     </div>
- </template>
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+let movies = ref([]);
+let errorMessage = ref("");
+
+const fetchMovies = async () => {
+    let token = localStorage.getItem("jwt_token");
+
+    if (!token) {
+        errorMessage.value = "❌ You are not authenticated. Redirecting to login...";
+        setTimeout(() => router.push("/login"), 2000); // ✅ Redirect if no token exists
+        return;
+    }
+
+    try {
+        let response = await fetch("http://127.0.0.1:8000/api/v1/movies", {
+            method: "GET",
+            headers: {
+                "Accept": "application/json",
+                "Authorization": "Bearer " + token // ✅ Correct token key
+            }
+        });
+
+        if (response.status === 401) {
+            errorMessage.value = "❌ Session expired. Please log in again.";
+            localStorage.removeItem("jwt_token"); // ✅ Clear invalid token
+            setTimeout(() => router.push("/login"), 2000);
+            return;
+        }
+
+        let data = await response.json();
+        
+        if (response.ok) {
+            movies.value = data.movies; // ✅ Update movies array with API response
+        } else {
+            errorMessage.value = `❌ Error: ${data.message}`;
+            console.error("Error fetching movies:", data.message);
+        }
+    } catch (error) {
+        errorMessage.value = "❌ Network error fetching movies.";
+        console.error("Network error:", error);
+    }
+};
+
+// ✅ Fetch movies when component is mounted
+onMounted(fetchMovies);
+</script>
