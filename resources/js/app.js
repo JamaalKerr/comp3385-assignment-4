@@ -1,9 +1,8 @@
 import { createApp } from 'vue';
-import App from './App.vue';
-import router from './router';
+import MovieList from './components/MovieList.vue';
+import MovieForm from './components/MovieForm.vue';
 
-const app = createApp(App)
-
-app.use(router);
-
+const app = createApp({});
+app.component('movie-list', MovieList);
+app.component('movie-form', MovieForm);
 app.mount('#app');
